@@ -9,4 +9,4 @@
 
 The competition aims to analyze the data set that Florence Nightingale used to determine the causes of death of the British Army during the Crimean War, and which served to analyze the factors associated with high mortality and to reduce it significantly. 
 
-This competition is organized by the [Rladies](https://rladies.org/) Spain organization (nodes of Barcelona, Madrid and Bilbao), in collaboration with the [Spanish Biometric Society](http://www.biometricsociety.net/) and the [Catalan Statistical Society](http://soce.iec.cat/).ç
+This competition is organized by the [Rladies](https://rladies.org/) Spain organization (nodes of Barcelona, Madrid and Bilbao), in collaboration with the [Spanish Biometric Society](http://www.biometricsociety.net/) and the [Catalan Statistical Society](http://soce.iec.cat/).
