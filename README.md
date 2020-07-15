@@ -10,4 +10,4 @@ The competition aims to analyze the data set that Florence Nightingale used to d
 
 This competition is organized by the [Rladies](https://rladies.org/) Spain organization (nodes of Barcelona, Madrid and Bilbao), in collaboration with the [Spanish Biometric Society](http://www.biometricsociety.net/) and the [Catalan Statistical Society](http://soce.iec.cat/).
 
-In this repository you can find the delivery of the _Tidy & Verse_ team, formed by: Laura Navarro Soler and Xavier Vivancos García.
+In this repository you can find the delivery of the **Tidy & Verse** team, formed by: [Laura Navarro Soler](https://github.com/lau-cloud) and Xavier Vivancos García.
