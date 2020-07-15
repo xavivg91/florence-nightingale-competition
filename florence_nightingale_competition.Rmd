@@ -1,0 +1,295 @@
+---
+title: "**LA GUERRA DE FLORENCE NIGHTINGALE**"
+author: "Laura Navarro Soler  y  Xavier Vivancos García"
+date: '`r Sys.Date()`'
+output:
+  html_document:
+    toc: yes
+    number_sections: yes
+    code_folding: hide
+    theme: cosmo
+    highlight: tango
+---
+
+
+<center><img
+src="https://www.branchcollective.org/wp-content/uploads/2016/08/2Nightingale-illustrated-london-news-feb-24-1855.jpg" >
+</center>
+
+# **Presentación**
+
+* **Laura Navarro Soler**. Periodista de datos, graduada en Periodismo por la Universidad Miguel Hernández de Elche (2017) y posgrado en Periodismo de Datos y Visualización por la Universitat Blanquerna (2019). Trabajo como _freelance_ con interés en temas sociales, ambientales y científicos.
+
+* **Xavier Vivancos García**. Ingeniero de Telecomunicaciones por la Universitat Pompeu Fabra y Máster en Business Intelligence y Big Data (Universitat Oberta de Catalunya). Actualmente trabajando como consultor BI, utilizando mayormente Power BI para elaborar y mantener _dashboards_. Apasionado de R y Kaggle.  
+
+# **Análisis de datos** 
+
+El gran drama de la Guerra de Crimea (1853-1856) no fueron ni las batallas, ni los bombardeos, ni los ataques. Fueron enfermedades zimóticas como el **cólera, el tifus, la fiebre tifoidea o la disentería** las que causaron más bajas en ambos bandos, sobre todo durante el invierno de 1854 y 1855. 
+
+**Florence Nightingale**, enfermera inglesa con grandes aptitudes para las matemáticas, libró una dura batalla contra las enfermedades infecciosas, fruto de las pésimas condiciones sanitarias de los soldados británicos. Y es que, según los datos de Florence y que se visualizan a continuación, estas enfermedades causaron el **80%** del total de muertes durante el transcurso de la guerra. 
+
+```{r fig.align='center', message=FALSE, warning=FALSE, dpi=300, fig.width=9, fig.height=7}
+# Librerías
+#devtools::install_github("zeehio/facetscales")
+library(facetscales)
+library(tidyverse)
+library(grid)
+library(ggtext)
+library(xlsx)
+library(zoo)
+library(scales)
+library(lubridate)
+library(treemap)
+
+datos <- readr::read_csv('https://raw.githubusercontent.com/lau-cloud/florence/master/florence_data.csv')
+# create date format
+datos <- within(datos, date <- sprintf("%d-%02d", year, month_1))
+datos$date <- as.Date(as.yearmon(datos$date))
+#class(datos$date)
+datos <- datos %>% 
+  filter(type == "deaths") %>% 
+  gather(causa_muerte, numero, zymotic_diseases, wounds_injuries, all_other) %>%
+  mutate(id = row_number())
+datos$causa_muerte <- gsub("all_other","Otras", datos$causa_muerte)
+datos$causa_muerte <- gsub("wounds_injuries","Heridas de guerra", datos$causa_muerte)
+datos$causa_muerte <- gsub("zymotic_diseases","Enfermedades zimóticas", datos$causa_muerte)
+#fijar factores
+datos$month <- as.factor(datos$month)
+datos$month <- factor(datos$month, levels=unique(datos$month))
+#class(datos$month)
+#class(datos$causa_muerte)
+datos <- datos[-c(1, 2, 3), ]
+#png(filename="treeplot.png", width=1200, height=600)
+tree <- treemap(datos,
+                index=c("month","causa_muerte"),
+                vSize="numero",
+                type="categorical",
+                vColor = "causa_muerte",
+                palette = c("#505050","#DF9D43", "#FED398"),
+                title = "Soldados fallecidos mes a mes",
+                algorithm = "pivotSize",
+                sortID = "-id",
+                mirror.y = TRUE,
+                mirror.x = TRUE,
+                fontsize.title = 14,
+                position.legend = "bottom",
+                border.col = "white",
+                border.lwds = c(18, 1),
+                force.print.labels = FALSE,
+                title.legend = "Causas de la muerte",
+                fontcolor.labels = "#505050",
+                bg.labels = 0,
+                fontsize.legend = 12,
+                lowerbound.cex.labels = .6,
+                align.labels = c("center", "top"),
+                fontsize.labels = c(11,0),
+                ymod.labels = 0.1,
+                aspRatio = 4/1
+)
+```
+
+Cuando en noviembre de 1854 Florence llegó a Scutari -la base de operaciones británicas- junto con un equipo de 38 enfermeras voluntarias, las muertes por enfermedades casi triplicaban a las de heridas de guerra, en ese momento fruto de la batalla que se estaba desarrollando en Inkerman. 
+
+El primer invierno de Florence fue devastador. Solo en enero de 1855 murieron 3.168 soldados británicos, 2.761 de ellos por enfermedades infecciosas. 
+
+La saturación médica y la evidente carencia de higiene en el hospital abrumaron a Florence, quien empezó una campaña para conseguir mejorar las condiciones sanitarias. En marzo de 1855, el gobierno británico destinó una **comisión sanitaria a Scutari**: Florence ordenó la limpieza inmediata de vertederos contaminantes, mejoró la ventilación del hospital y realizó pequeños cambios de gran impacto como la renovación de toallas y ropa de los hospitalizados.  
+
+```{r fig.align='center', message=FALSE, warning=FALSE, dpi=300, fig.width=9, fig.height=7}
+datos <- readr::read_csv('https://raw.githubusercontent.com/lau-cloud/florence/master/florence_data.csv')
+#date
+#datos1$Month <- as.Date(paste("01",datos1$Month,sep="-"),"%d-%b-%y")
+# create date format
+datos <- within(datos, date <- sprintf("%d-%02d", year, month_1))
+datos$date <- as.Date(as.yearmon(datos$date))
+# class(datos$date)
+muertes <- datos %>% 
+  filter(type == "deaths") %>% 
+  select(date, month, zymotic_diseases, wounds_injuries, all_other) %>% 
+  mutate(zymotic_count = cumsum(zymotic_diseases), 
+         wounds_count = cumsum(wounds_injuries),
+         all_other_count = cumsum(all_other)) %>% 
+  gather(causa_muerte, muertos, zymotic_count, wounds_count, all_other_count)
+muertes$month <- as.factor(muertes$month)
+muertes$month <- factor(muertes$month, levels=unique(muertes$month))
+#reorder causa_muerte
+muertes$causa_muerte <- factor(muertes$causa_muerte, levels = c("zymotic_count","wounds_count", "all_other_count"))
+#plot
+acum_p <- ggplot(muertes, aes( x = date, y = muertos, fill = causa_muerte)) +
+  geom_area(position="stack", stat="identity") +
+  scale_fill_manual(labels = c("Enfermedades zimóticas", "Heridas de guerra", "Otras"), values = c("#474444", "#DF9D43", "#FED398")) +
+  theme_classic() +
+  labs(title="Muertes de los soldados británicos",
+       subtitle="Frecuencia acumulada",
+       y="Muertes") +
+  scale_x_date(date_breaks = "months", 
+               date_labels = "%b-%y",
+               limits = as.Date(c("1854-04-01","1856-03-01"))) +
+  theme(legend.position=c(0.15,0.3),
+        axis.text.x=element_text(angle=45, hjust=1),
+        axis.title.x=element_blank(),
+        strip.text=element_text(colour= "white"),
+        panel.grid.major.y = element_line(size = 0.5, colour = "grey", linetype = "dotted")) +
+  guides(fill = guide_legend(title="Causa de la muerte")) +
+  scale_y_continuous(label=function(x) format(x, big.mark=".", decimal.mark=",")) +
+  geom_vline(xintercept = as.Date("1855-03-01"), linetype="dotted", 
+             color = "white", size=0.5) +
+  annotate(geom = "text", x = as.Date("1855-03-01"), y = 6000, 
+           label = "Empiezan las reformas de Florence", color = "white",
+           angle = 90, size = 2.8, vjust = -0.5, hjust = 0.3) +
+  geom_vline(xintercept = as.Date("1855-09-01"), linetype="dotted", 
+             color = "white", size=0.5) +
+  annotate(geom = "text", x = as.Date("1855-09-01"), y = 6000, 
+           label = "Las muertes por enfermedades se reducen", color = "white",
+           angle = 90, size = 2.8, vjust = -0.5, hjust = 0.1) +
+  annotate(geom = "text", x = as.Date("1855-03-01"), y = 13550, 
+           label = "El 85% muere por\n enf. zimóticas", color = "black",
+           size = 3, vjust = -0.5, hjust = 0.5) +
+  annotate(geom = "text", x = as.Date("1855-09-01"), y = 17000, 
+           label = "El 39% muere por\n enf. zimóticas", color = "black",
+           size = 3, vjust = -0.5, hjust = 0.5)
+acum_p
+```
+
+```{r fig.align='center', fig.height=7, fig.width=9.5, dpi=300, message=FALSE, warning=FALSE}
+# Lectura datos
+data <- read.xlsx("C:/Users/xviva/OneDrive/Desktop/datos_florence.xlsx", 1) %>%
+  rename(`Average size of army`=Average.size.of.army,
+         `Enfermedades zimóticas`=Zymotic.diseases,
+         `Heridas de guerra`=Wounds...injuries,
+         `Otras`=All.other.causes,
+         `Zymotic diseases (Annual rate)`=Zymotic.diseases.1,
+         `Wounds & injuries (Annual rate)`=Wounds...injuries.1,
+         `All other causes (Annual rate)`=All.other.causes.1) %>%
+  mutate_at(vars(Year), factor)
+
+# Orden meses
+data$Month <- factor(data$Month, levels=unique(data$Month))
+
+# Anotaciones
+annotates <- data.frame(label=c("Florence y 38 enfermeras\nmás llegan al frente",
+                                "Empiezan las reformas\npromulgadas por Florence",
+                                "Batalla del río Almá",
+                                "Batalla de Balaclava",
+                                "Batalla de Inkerman",
+                                "Tercer y cuarto bombardeo\nen Sebastopol",
+                                "Batalla de la Gran Redan",
+                                "Primer invierno\n de Florence"),
+                        Category=as.factor(c("Enfermedades zimóticas", "Enfermedades zimóticas",
+                                             "Heridas de guerra","Heridas de guerra", 
+                                             "Heridas de guerra", "Heridas de guerra",
+                                             "Heridas de guerra", "Otras")),
+                        x=c(7, 15, 4, 6, 8, 15, 20, 10.5),
+                        y=c(2500, 2500, 200, 400, 600, 500, 500, 625),
+                        type=as.factor(c(0, 0, 0, 0, 0, 0, 0, 0))
+)
+
+# Flechas
+lines <- data.frame(x=c(7.2, 15, 4, 6, 8, 15, 20), 
+                    xend=c(8, 12.5, 5.5, 6.8, 8, 15, 18.2), 
+                    y=c(2150, 2150, 140, 340, 530, 395, 420), 
+                    yend=c(1100, 1800, 100, 200, 375, 260, 320),
+                    Category=as.factor(c("Enfermedades zimóticas", "Enfermedades zimóticas",
+                                         "Heridas de guerra", "Heridas de guerra", "Heridas de guerra",
+                                         "Heridas de guerra", "Heridas de guerra")),
+                    type=factor(c(0, 0, 0, 0, 0, 0, 0)))
+  
+# Diferentes escalas para cada facet de la visualización
+scales_y <- list(
+  `Enfermedades zimóticas`=scale_y_continuous(limits=c(0, 2800), breaks=seq(0, 2800, 1000), 
+                                           label=function(x) format(x, big.mark=".", decimal.mark=",")),
+  `Heridas de guerra`=scale_y_continuous(limits=c(0, 700), breaks=seq(0, 700, 250)),
+  `Otras`=scale_y_continuous(limits=c(0, 700), breaks=seq(0, 700, 250)))
+
+# Waterfall (enfermedades zimóticas)
+zymotic <- data %>%
+  select(1, 3) %>%
+  rename(start=`Enfermedades zimóticas`) %>%
+  mutate(end=lead(start, 1)) %>%
+  mutate(Difference=end-start)
+
+zymotic2 <- rbind(c("aa", 0, 1, 1), zymotic)
+zymotic2$Month <- lead(zymotic2$Month, 1)
+zymotic2$id <- seq_along(zymotic2$start)
+zymotic2$type <- ifelse(zymotic2$Difference>0, "Más muertos", "Menos muertos")
+zymotic2 <- zymotic2 %>% 
+  mutate_at(vars(start, end, Difference), as.numeric)%>%
+              slice(1:24)
+zymotic2$Category <- rep("Enfermedades zimóticas", 24)
+
+# Waterfall (heridas de guerra)
+wounds <- data %>%
+  select(1, 4) %>%
+  rename(start=`Heridas de guerra`) %>%
+  mutate(end=lead(start, 1)) %>%
+  mutate(Difference=end-start)
+
+wounds2 <- rbind(c("aa", 0, 0, 0), wounds)
+wounds2$Month <- lead(wounds2$Month, 1)
+wounds2$id <- seq_along(wounds2$start)
+wounds2$type <- ifelse(wounds2$Difference>0, "Más muertos", "Menos muertos")
+wounds2 <- wounds2 %>% 
+  mutate_at(vars(start, end, Difference), as.numeric)%>%
+              slice(1:24)
+
+wounds2$Category <- rep("Heridas de guerra", 24)
+
+# Waterfall (otras)
+other <- data %>%
+  select(1, 5) %>%
+  rename(start=`Otras`) %>%
+  mutate(end=lead(start, 1)) %>%
+  mutate(Difference=end-start)
+
+other2 <- rbind(c("aa", 0, 5, 5), other)
+other2$Month <- lead(other2$Month, 1)
+other2$id <- seq_along(other2$start)
+other2$type <- ifelse(other2$Difference>0, "Más muertos", "Menos muertos")
+other2 <- other2 %>% 
+  mutate_at(vars(start, end, Difference), as.numeric)%>%
+              slice(1:24)
+
+other2$Category <- rep("Otras", 24)
+
+# Juntamos los tres data frame
+data2 <- rbind(zymotic2, wounds2, other2)
+
+# Orden causa muerte
+data2$Category <- factor(data2$Category, levels= c("Enfermedades zimóticas", "Heridas de guerra", "Otras"))
+
+# Visualización
+p <- ggplot(data=data2, aes(x=Month, fill=type)) + 
+  geom_rect(aes(x=Month, xmin=id-0.45, xmax=id+0.45, ymin=end, ymax=start), alpha=3/5) +
+  scale_fill_manual(values=c("white", "firebrick", "darkseagreen")) +
+  labs(y="Muertes", title="<span style='font-size:14pt'>La guerra de Florence</span><br>
+  <span style='font-size:11pt'><span style='color:firebrick;'> Incremento</span> y 
+       <span style='color:darkseagreen;'>disminución</span> de muertos durante el transcurso del
+  conflicto</span>") +
+  geom_text(aes(x=id, label=Difference, y=end), position=position_stack(vjust=1), size=3) +
+  geom_rect(data=data2 %>% filter(Category=="Otras"), aes(xmin=8.5, xmax=12.5, ymin=-Inf, ymax=Inf), alpha=0.025, fill='gray87') +
+  theme_bw() +
+  facet_grid_sc(Category ~ ., scales=list(y=scales_y)) +
+  geom_text(data=annotates, aes(x=x, y=y, label=label), size=2.5) +
+  geom_segment(data=lines, aes(x=x, xend=xend, y=y, yend=yend), arrow=arrow(length=unit(0.2,"cm"))) +
+  theme(axis.text.x=element_text(angle=45, hjust=1),
+        axis.title.x=element_blank(),
+        legend.position="none",
+        strip.text=element_text(colour='white', size=11),
+        plot.title=element_textbox_simple(), 
+        panel.grid.minor=element_blank()) 
+
+# Labels de los facets de colores
+g <- ggplot_gtable(ggplot_build(p))
+stripr <- which(grepl('strip-r', g$layout$name))
+fills <- c("#474444", "#DF9D43", "#FED398")
+k <- 1
+for (i in stripr) {
+  j <- which(grepl('rect', g$grobs[[i]]$grobs[[1]]$childrenOrder))
+  g$grobs[[i]]$grobs[[1]]$children[[j]]$gp$fill <- fills[k]
+  k <- k+1
+}
+grid.draw(g)
+```
+
+A partir de esas medidas, el índice de mortalidad bajó rápidamente. En septiembre de 1855, tan solo cuatro de cada diez soldados morían por una enfermedad infecciosa. Las reformas sanitarias suavizaron la curva de muertes acumuladas y evitaron otro invierno negro. La victoria de Florence contra las enfermedades zimóticas coincidió con la victoria de los aliados (Reino Unido, Francia, Turquía y Cerdeña) contra el Imperio ruso y Grecia. 
+
+
