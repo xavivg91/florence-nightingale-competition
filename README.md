@@ -1,4 +1,4 @@
-# Florence Nightingale competition <img src='florence-nightingale.jpg' align="right" height="175" /></a>
+# Florence Nightingale competition <img src='florence-nightingale.jpg' align="right" height="125" /></a>
 
 <!-- badges: start -->
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
