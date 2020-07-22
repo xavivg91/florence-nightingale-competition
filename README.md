@@ -7,17 +7,14 @@
 
 [![GitHub Xavi](https://img.shields.io/github/followers/xavivg91?label=follow&style=social)](https://github.com/xavivg91/)
 [![Twitter Follow](https://img.shields.io/twitter/follow/Xavier91vg.svg?style=social)](https://twitter.com/Xavier91vg)
-
+                                                                               
 <!-- badges: end -->
-
-
 
 The competition aims to analyze the data set that Florence Nightingale used to determine the causes of death of the British Army during the Crimean War, and which served to analyze the factors associated with high mortality and to reduce it significantly. 
 
 <p align="center">
 <img src='florence-nightingale.jpg' height="225" /></a>
 </p>
-
 
 This competition is organized by the [Rladies](https://rladies.org/) Spain organization (nodes of Barcelona, Madrid and Bilbao), in collaboration with the [Spanish Biometric Society](http://www.biometricsociety.net/) and the [Catalan Statistical Society](http://soce.iec.cat/). You can check out more information about the competition [here](https://github.com/rladies/spain_nightingale).
 
